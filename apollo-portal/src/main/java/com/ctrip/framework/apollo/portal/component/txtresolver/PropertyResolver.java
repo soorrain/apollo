@@ -27,24 +27,30 @@ public class PropertyResolver implements ConfigTextResolver {
   @Override
   public ItemChangeSets resolve(long namespaceId, String configText, List<ItemDTO> baseItems) {
 
+    // 创建 Item Map ，以 lineNum 为 Key
     Map<Integer, ItemDTO> oldLineNumMapItem = BeanUtils.mapByKey("lineNum", baseItems);
+    // 创建 Item Map ，以 key 为 Key
     Map<String, ItemDTO> oldKeyMapItem = BeanUtils.mapByKey("key", baseItems);
 
     //remove comment and blank item map.
     oldKeyMapItem.remove("");
 
+    // 按照 `\n` 拆分 Property 配置
     String[] newItems = configText.split(ITEM_SEPARATOR);
 
+    // 校验是否存在重复配置的 Key。若存在，抛出 BadRequestException 异常
     if (isHasRepeatKey(newItems)) {
       throw new BadRequestException("config text has repeat key please check.");
     }
 
+    // 创建 ItemChangeSets 对象，并解析配置文件 到 ItemChangeSets 中
     ItemChangeSets changeSets = new ItemChangeSets();
     Map<Integer, String> newLineNumMapItem = new HashMap<Integer, String>();//use for delete blank and comment item
     int lineCounter = 1;
     for (String newItem : newItems) {
       newItem = newItem.trim();
       newLineNumMapItem.put(lineCounter, newItem);
+      // 使用行号，获得已经存在的 ItemDTO
       ItemDTO oldItemByLine = oldLineNumMapItem.get(lineCounter);
 
       //comment item
@@ -120,6 +126,7 @@ public class PropertyResolver implements ConfigTextResolver {
   private void handleNormalLine(Long namespaceId, Map<String, ItemDTO> keyMapOldItem, String newItem,
                                 int lineCounter, ItemChangeSets changeSets) {
 
+    // 解析一行，生成 [Key, Value]
     String[] kv = parseKeyValueFromItem(newItem);
 
     if (kv == null) {
@@ -129,15 +136,19 @@ public class PropertyResolver implements ConfigTextResolver {
     String newKey = kv[0];
     String newValue = kv[1].replace("\\n", "\n"); //handle user input \n
 
+    // 获取老的 ItemDTO 对戏
     ItemDTO oldItem = keyMapOldItem.get(newKey);
 
+    // 不存在，则创建 ItemDto 到 ChangeSets 的 `createItems`
     if (oldItem == null) {//new item
       changeSets.addCreateItem(buildNormalItem(0l, namespaceId, newKey, newValue, "", lineCounter));
+      // 如果值或者行号不相等，则创建 ItemDto 到 ChangeSets 的 `updateItems`
     } else if (!newValue.equals(oldItem.getValue()) || lineCounter != oldItem.getLineNum()) {//update item
       changeSets.addUpdateItem(
           buildNormalItem(oldItem.getId(), namespaceId, newKey, newValue, oldItem.getComment(),
               lineCounter));
     }
+    // 移除老的 ItemDTO 对象
     keyMapOldItem.remove(newKey);
   }
 

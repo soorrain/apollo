@@ -30,8 +30,11 @@ public class CreationListener {
 
   @EventListener
   public void onAppCreationEvent(AppCreationEvent event) {
+    // 将 App 转成 AppDTO 对象
     AppDTO appDTO = BeanUtils.transfrom(AppDTO.class, event.getApp());
+    // todo 获取有效的 Env 数组
     List<Env> envs = portalSettings.getActiveEnvs();
+    // 循环 Env 数组，调用对应的 Admin Service 的 API，创建 App 对象
     for (Env env : envs) {
       try {
         appAPI.createApp(env, appDTO);
@@ -44,8 +47,11 @@ public class CreationListener {
 
   @EventListener
   public void onAppNamespaceCreationEvent(AppNamespaceCreationEvent event) {
+    // 将 AppNamespace 转成 AppNamespaceDTO 对象
     AppNamespaceDTO appNamespace = BeanUtils.transfrom(AppNamespaceDTO.class, event.getAppNamespace());
+    // todo 获取有效的 Env 数组
     List<Env> envs = portalSettings.getActiveEnvs();
+    // 循环 Env 数组，调用对应的 Admin Service 的 API，创建 AppNamespace 对象
     for (Env env : envs) {
       try {
         namespaceAPI.createAppNamespace(env, appNamespace);

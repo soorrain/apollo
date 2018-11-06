@@ -51,10 +51,12 @@ public class ReleaseService {
     String releaseBy = StringUtils.isEmpty(model.getReleasedBy()) ?
                        userInfoHolder.getUser().getUserId() : model.getReleasedBy();
 
+    // 调用 Admin Service API，发布 Namespace 配置
     ReleaseDTO releaseDTO = releaseAPI.createRelease(appId, env, clusterName, namespaceName,
                                                      model.getReleaseTitle(), model.getReleaseComment(),
                                                      releaseBy, isEmergencyPublish);
 
+    // todo Tracer 日志
     Tracer.logEvent(TracerEventType.RELEASE_NAMESPACE,
                     String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
 

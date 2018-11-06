@@ -103,23 +103,31 @@ public class ReleaseController {
                             @RequestParam(name = "comment", required = false) String releaseComment,
                             @RequestParam("operator") String operator,
                             @RequestParam(name = "isEmergencyPublish", defaultValue = "false") boolean isEmergencyPublish) {
+    // 校验对应的 Namespace 对象是否存在。若不存在，抛出 NotFoundException 异常。
     Namespace namespace = namespaceService.findOne(appId, clusterName, namespaceName);
     if (namespace == null) {
       throw new NotFoundException(String.format("Could not find namespace for %s %s %s", appId,
                                                 clusterName, namespaceName));
     }
+    // 发布 Namespace 的配置
     Release release = releaseService.publish(namespace, releaseName, releaseComment, operator, isEmergencyPublish);
 
     //send release message
+    // 获得父 Namespace
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
     String messageCluster;
+    // 灰度发布
     if (parentNamespace != null) {
+      // 使用父 `clusterName`
       messageCluster = parentNamespace.getClusterName();
     } else {
+      // 使用请求的 `clusterName`
       messageCluster = clusterName;
     }
+    // 发送 ReleaseMessage
     messageSender.sendMessage(ReleaseMessageKeyGenerator.generate(appId, messageCluster, namespaceName),
                               Topics.APOLLO_RELEASE_TOPIC);
+    // // 将 Release 转换成 ReleaseDTO 对象
     return BeanUtils.transfrom(ReleaseDTO.class, release);
   }
 

@@ -90,25 +90,32 @@ public class AppService {
     String appId = app.getAppId();
     App managedApp = appRepository.findByAppId(appId);
 
+    // 判断 `appId` 是否已经存在对应的 App 对象。若已经存在，抛出 BadRequestException 异常。
     if (managedApp != null) {
       throw new BadRequestException(String.format("App already exists. AppId = %s", appId));
     }
 
+    // 获取 UserInfo 对象。若不存在，抛出 BadRequestException 异常。
     UserInfo owner = userService.findByUserId(app.getOwnerName());
     if (owner == null) {
       throw new BadRequestException("Application's owner not exist.");
     }
     app.setOwnerEmail(owner.getEmail());
 
+    // 设置 App 的创建人和修改人
     String operator = userInfoHolder.getUser().getUserId();
     app.setDataChangeCreatedBy(operator);
     app.setDataChangeLastModifiedBy(operator);
 
+    // 保存 App 对象到数据库
     App createdApp = appRepository.save(app);
 
+    // 创建 App 的默认命名空间 "application"
     appNamespaceService.createDefaultAppNamespace(appId);
+    // todo 初始化 App 角色
     roleInitializationService.initAppRoles(createdApp);
 
+    // todo Tracer 日志
     Tracer.logEvent(TracerEventType.CREATE_APP, appId);
 
     return createdApp;

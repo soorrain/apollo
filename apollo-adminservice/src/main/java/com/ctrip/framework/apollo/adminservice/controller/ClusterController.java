@@ -29,19 +29,24 @@ public class ClusterController {
   public ClusterDTO create(@PathVariable("appId") String appId,
                            @RequestParam(value = "autoCreatePrivateNamespace", defaultValue = "true") boolean autoCreatePrivateNamespace,
                            @RequestBody ClusterDTO dto) {
+    // 校验 ClusterDTO 的 `name` 格式正确
     if (!InputValidator.isValidClusterNamespace(dto.getName())) {
       throw new BadRequestException(String.format("Cluster格式错误: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
 
+    // 将 ClusterDTO 转换为 Cluster 对象
     Cluster entity = BeanUtils.transfrom(Cluster.class, dto);
+    // 判断 `name` 在 App 下是否已经存在对应的 Cluster 对象。若已经存在，抛出 BadRequestException 异常。
     Cluster managedEntity = clusterService.findOne(appId, entity.getName());
     if (managedEntity != null) {
       throw new BadRequestException("cluster already exist.");
     }
 
+    // 保存 Cluster，并创建其 Namespace
     if (autoCreatePrivateNamespace) {
       entity = clusterService.saveWithInstanceOfAppNamespaces(entity);
     } else {
+      // 保存 Cluster，不创建 Namespace
       entity = clusterService.saveWithoutInstanceOfAppNamespaces(entity);
     }
 

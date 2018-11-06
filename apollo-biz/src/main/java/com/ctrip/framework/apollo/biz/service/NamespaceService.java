@@ -217,9 +217,13 @@ public class NamespaceService {
     String appId = namespace.getAppId();
     String namespaceName = namespace.getNamespaceName();
 
+    // 获得 Cluster
     Cluster cluster = clusterService.findOne(appId, namespace.getClusterName());
+    // 若为子 Cluster
     if (cluster != null && cluster.getParentClusterId() > 0) {
+      // 获得父 Cluster
       Cluster parentCluster = clusterService.findOne(cluster.getParentClusterId());
+      // 获得父 Namespace
       return findOne(appId, parentCluster.getName(), namespaceName);
     }
 
@@ -300,12 +304,16 @@ public class NamespaceService {
 
   @Transactional
   public Namespace save(Namespace entity) {
+    // 判断 App 的 Cluster 下是否已经存在 Namespace 。若已经存在，抛出 ServiceException 异常
     if (!isNamespaceUnique(entity.getAppId(), entity.getClusterName(), entity.getNamespaceName())) {
       throw new ServiceException("namespace not unique");
     }
+    // 保护代码，避免 Namespace 对象中已经存在 id 属性
     entity.setId(0);//protection
+    // 保存 Namespace 到数据库
     Namespace namespace = namespaceRepository.save(entity);
 
+    // 记录 Audit 到数据库中
     auditService.audit(Namespace.class.getSimpleName(), namespace.getId(), Audit.OP.INSERT,
                        namespace.getDataChangeCreatedBy());
 

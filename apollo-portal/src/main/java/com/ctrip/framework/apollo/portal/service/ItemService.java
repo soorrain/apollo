@@ -61,18 +61,22 @@ public class ItemService {
     long namespaceId = model.getNamespaceId();
     String configText = model.getConfigText();
 
+    // 获得对应格式的 ConfigTextResolver 对象
     ConfigTextResolver resolver =
         model.getFormat() == ConfigFileFormat.Properties ? propertyResolver : fileTextResolver;
 
+    // 解析成 ItemChangeSets 对象
     ItemChangeSets changeSets = resolver.resolve(namespaceId, configText,
         itemAPI.findItems(appId, env, clusterName, namespaceName));
     if (changeSets.isEmpty()) {
       return;
     }
 
+    // 设置修改人为当前管理员
     changeSets.setDataChangeLastModifiedBy(userInfoHolder.getUser().getUserId());
     updateItems(appId, env, clusterName, namespaceName, changeSets);
 
+    // todo Tracer 日志
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE_BY_TEXT,
         String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
@@ -84,14 +88,18 @@ public class ItemService {
 
 
   public ItemDTO createItem(String appId, Env env, String clusterName, String namespaceName, ItemDTO item) {
+    // 校验 NamespaceDTO 是否存在。若不存在，抛出 BadRequestException 异常。
     NamespaceDTO namespace = namespaceAPI.loadNamespace(appId, env, clusterName, namespaceName);
     if (namespace == null) {
       throw new BadRequestException(
           "namespace:" + namespaceName + " not exist in env:" + env + ", cluster:" + clusterName);
     }
+    // 设置 ItemDTO 的 `namespaceId` 属性
     item.setNamespaceId(namespace.getId());
 
+    // 保存 Item 到 Admin Service
     ItemDTO itemDTO = itemAPI.createItem(appId, env, clusterName, namespaceName, item);
+    // todo Tracer 日志
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
     return itemDTO;
   }

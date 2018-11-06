@@ -115,19 +115,24 @@ public class NamespaceController {
   public ResponseEntity<Void> createNamespace(@PathVariable String appId,
                                               @RequestBody List<NamespaceCreationModel> models) {
 
+    // 校验 `models` 非空
     checkModel(!CollectionUtils.isEmpty(models));
 
+    // todo 初始化 Namespace 的 Roles
     String namespaceName = models.get(0).getNamespace().getNamespaceName();
     String operator = userInfoHolder.getUser().getUserId();
 
     roleInitializationService.initNamespaceRoles(appId, namespaceName, operator);
     roleInitializationService.initNamespaceEnvRoles(appId, namespaceName, operator);
 
+    // 循环 `models` 创建 Namespace 对象
     for (NamespaceCreationModel model : models) {
       NamespaceDTO namespace = model.getNamespace();
+      // 校验相关参数非空
       RequestPrecondition.checkArgumentsNotEmpty(model.getEnv(), namespace.getAppId(),
                                                  namespace.getClusterName(), namespace.getNamespaceName());
 
+      // 创建 Namespace 对象
       try {
         namespaceService.createNamespace(Env.valueOf(model.getEnv()), namespace);
       } catch (Exception e) {
@@ -138,6 +143,7 @@ public class NamespaceController {
       }
     }
 
+    // 授予 Namespace Role 给当前管理员
     assignNamespaceRoleToOperator(appId, namespaceName);
 
     return ResponseEntity.ok().build();
@@ -182,21 +188,29 @@ public class NamespaceController {
       @RequestParam(defaultValue = "true") boolean appendNamespacePrefix,
       @RequestBody AppNamespace appNamespace) {
 
+    // 校验 AppNamespace 的 `appId` 和 `name` 非空。
     RequestPrecondition.checkArgumentsNotEmpty(appNamespace.getAppId(), appNamespace.getName());
+    // 校验 AppNamespace 的 `name` 格式正确
     if (!InputValidator.isValidAppNamespace(appNamespace.getName())) {
       throw new BadRequestException(String.format("Namespace格式错误: %s",
           InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & "
               + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));
     }
 
+    // 保存 AppNamespace 对象到数据库
     AppNamespace createdAppNamespace = appNamespaceService.createAppNamespaceInLocal(appNamespace, appendNamespacePrefix);
 
+    // todo 赋予权限，若满足如下任一条件：
+    // 1. Public 类型的 Namespace 。
+    // 2. Private 类型的 Namespace，并且允许 App 管理员创建 Private 类型的 Namespace 。
     if (portalConfig.canAppAdminCreatePrivateNamespace() || createdAppNamespace.isPublic()) {
       assignNamespaceRoleToOperator(appId, appNamespace.getName());
     }
 
+    // 发布 AppNamespaceCreationEvent 创建事件
     publisher.publishEvent(new AppNamespaceCreationEvent(createdAppNamespace));
 
+    // 返回创建的 AppNamespace 对象
     return createdAppNamespace;
   }
 
