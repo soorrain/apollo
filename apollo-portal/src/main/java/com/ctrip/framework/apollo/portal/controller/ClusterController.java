@@ -34,17 +34,22 @@ public class ClusterController {
   public ClusterDTO createCluster(@PathVariable String appId, @PathVariable String env,
                                   @RequestBody ClusterDTO cluster) {
 
+    // 校验 ClusterDTO 非空
     checkModel(Objects.nonNull(cluster));
+    // 校验 ClusterDTO 的 `appId` 和 `name` 非空。
     RequestPrecondition.checkArgumentsNotEmpty(cluster.getAppId(), cluster.getName());
 
+    // 校验 ClusterDTO 的 `name` 格式正确。
     if (!InputValidator.isValidClusterNamespace(cluster.getName())) {
       throw new BadRequestException(String.format("Cluster格式错误: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
 
+    // 设置 ClusterDTO 的创建和修改人为当前管理员
     String operator = userInfoHolder.getUser().getUserId();
     cluster.setDataChangeLastModifiedBy(operator);
     cluster.setDataChangeCreatedBy(operator);
 
+    // 创建 Cluster 到 Admin Service
     return clusterService.createCluster(Env.valueOf(env), cluster);
   }
 
