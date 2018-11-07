@@ -3,10 +3,22 @@ package com.ctrip.framework.apollo.common.dto;
 public class NamespaceDTO extends BaseDTO{
   private long id;
 
+  /**
+   * App 编号
+   * {@link com.ctrip.framework.apollo.common.entity.App#appId}
+   */
   private String appId;
-  
+
+  /**
+   * Cluster 名字
+   * {@link com.ctrip.framework.apollo.biz.entity.Cluster#name}
+   */
   private String clusterName;
 
+  /**
+   * Namespace 名字
+   * {@link com.ctrip.framework.apollo.common.entity.AppNamespace#name}
+   */
   private String namespaceName;
 
   public long getId() {

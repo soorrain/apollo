@@ -115,19 +115,24 @@ public class NamespaceController {
   public ResponseEntity<Void> createNamespace(@PathVariable String appId,
                                               @RequestBody List<NamespaceCreationModel> models) {
 
+    // 校验 `models` 非空
     checkModel(!CollectionUtils.isEmpty(models));
 
+    // TODO 初始化 Namespace 的 Role 们
     String namespaceName = models.get(0).getNamespace().getNamespaceName();
     String operator = userInfoHolder.getUser().getUserId();
 
     roleInitializationService.initNamespaceRoles(appId, namespaceName, operator);
     roleInitializationService.initNamespaceEnvRoles(appId, namespaceName, operator);
 
+    // 循环 `models` ，创建 Namespace 对象
     for (NamespaceCreationModel model : models) {
       NamespaceDTO namespace = model.getNamespace();
+      // 校验相关参数非空
       RequestPrecondition.checkArgumentsNotEmpty(model.getEnv(), namespace.getAppId(),
                                                  namespace.getClusterName(), namespace.getNamespaceName());
 
+      // 创建 Namespace 对象
       try {
         namespaceService.createNamespace(Env.valueOf(model.getEnv()), namespace);
       } catch (Exception e) {
@@ -138,6 +143,7 @@ public class NamespaceController {
       }
     }
 
+    // TODO 授予 Namespace Role 给当前管理员
     assignNamespaceRoleToOperator(appId, namespaceName);
 
     return ResponseEntity.ok().build();
