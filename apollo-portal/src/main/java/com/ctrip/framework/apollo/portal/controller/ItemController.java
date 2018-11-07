@@ -58,22 +58,34 @@ public class ItemController {
     configService.updateConfigItemByText(model);
   }
 
+  /**
+   * 创建 Item
+   * @param appId App#appId
+   * @param env env
+   * @param clusterName Cluster#name
+   * @param namespaceName Namespace#namespaceName
+   * @param item ItemDTO 对象
+   * @return ItemDTO 对象
+   */
   @PreAuthorize(value = "@permissionValidator.hasModifyNamespacePermission(#appId, #namespaceName, #env)")
   @RequestMapping(value = "/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/item", method = RequestMethod.POST)
   public ItemDTO createItem(@PathVariable String appId, @PathVariable String env,
                             @PathVariable String clusterName, @PathVariable String namespaceName,
                             @RequestBody ItemDTO item) {
+    // 校验 Item 格式正确
     checkModel(isValidItem(item));
 
     //protect
     item.setLineNum(0);
     item.setId(0);
+    // 设置 ItemDTO 的创建和修改人为当前管理员
     String userId = userInfoHolder.getUser().getUserId();
     item.setDataChangeCreatedBy(userId);
     item.setDataChangeLastModifiedBy(userId);
     item.setDataChangeCreatedTime(null);
     item.setDataChangeLastModifiedTime(null);
 
+    // 保存 Item 到 Admin Service
     return configService.createItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 
