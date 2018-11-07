@@ -86,10 +86,12 @@ public class NamespaceUnlockAspect {
   }
 
   private void tryUnlock(Namespace namespace) {
+    // 当关闭锁定 Namespace 开关时，直接返回
     if (bizConfig.isNamespaceLockSwitchOff()) {
       return;
     }
 
+    // 若当前 Namespace 的配置恢复原有状态，释放锁，即删除 NamespaceLock
     if (!isModified(namespace)) {
       namespaceLockService.unlock(namespace.getId());
     }
@@ -97,16 +99,22 @@ public class NamespaceUnlockAspect {
   }
 
   boolean isModified(Namespace namespace) {
+    // 获得当前 Namespace 的最后有效的 Release 对象
     Release release = releaseService.findLatestActiveRelease(namespace);
+    // 获得当前 Namespace 的 Item 集合
     List<Item> items = itemService.findItemsWithoutOrdered(namespace.getId());
 
+    // 如果无 Release 对象，判断是否有普通的 Item 配置项。若有，则代表修改过。
     if (release == null) {
       return hasNormalItems(items);
     }
 
+    // 获得 Release 的配置 Map
     Map<String, String> releasedConfiguration = gson.fromJson(release.getConfigurations(), GsonType.CONFIG);
+    // 获得当前 Namespace 的配置 Map
     Map<String, String> configurationFromItems = generateConfigurationFromItems(namespace, items);
 
+    // 对比两个 配置 Map ，判断是否相等。
     MapDifference<String, String> difference = Maps.difference(releasedConfiguration, configurationFromItems);
 
     return !difference.areEqual();
@@ -115,6 +123,7 @@ public class NamespaceUnlockAspect {
 
   private boolean hasNormalItems(List<Item> items) {
     for (Item item : items) {
+      // 非空串的 Key ，因为注释和空行的 Item 的 Key 为空串
       if (!StringUtils.isEmpty(item.getKey())) {
         return true;
       }
@@ -127,10 +136,13 @@ public class NamespaceUnlockAspect {
 
     Map<String, String> configurationFromItems = Maps.newHashMap();
 
+    // 获得父 Namespace 对象
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
+    // 若无父 Namespace ，使用自己的配置
     //parent namespace
     if (parentNamespace == null) {
       generateMapFromItems(namespaceItems, configurationFromItems);
+    // 若有父 Namespace ，说明是灰度发布，合并父 Namespace 的配置 + 自己的配置项
     } else {//child namespace
       Release parentRelease = releaseService.findLatestActiveRelease(parentNamespace);
       if (parentRelease != null) {

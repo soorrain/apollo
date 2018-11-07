@@ -229,8 +229,11 @@ public class ReleaseService {
   }
 
   private void checkLock(Namespace namespace, boolean isEmergencyPublish, String operator) {
+    // 非紧急发布
     if (!isEmergencyPublish) {
+      // 获得 NamespaceLock 对象
       NamespaceLock lock = namespaceLockService.findLock(namespace.getId());
+      // 校验锁定人是否是当前管理员。若是，抛出 BadRequestException 异常
       if (lock != null && lock.getDataChangeCreatedBy().equals(operator)) {
         throw new BadRequestException("Config can not be published by yourself.");
       }
@@ -376,6 +379,7 @@ public class ReleaseService {
     release.setConfigurations(gson.toJson(configurations));
     release = releaseRepository.save(release);
 
+    // 释放 NamespaceLock
     namespaceLockService.unlock(namespace.getId());
     auditService.audit(Release.class.getSimpleName(), release.getId(), Audit.OP.INSERT,
                        release.getDataChangeCreatedBy());

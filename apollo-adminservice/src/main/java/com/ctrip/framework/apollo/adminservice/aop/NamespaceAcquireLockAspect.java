@@ -75,6 +75,7 @@ public class NamespaceAcquireLockAspect {
 
   void acquireLock(String appId, String clusterName, String namespaceName,
                            String currentUser) {
+    // 当关闭锁定 Namespace 开关时，直接返回
     if (bizConfig.isNamespaceLockSwitchOff()) {
       return;
     }
@@ -85,6 +86,7 @@ public class NamespaceAcquireLockAspect {
   }
 
   void acquireLock(long namespaceId, String currentUser) {
+    // 当关闭锁定 Namespace 开关时，直接返回
     if (bizConfig.isNamespaceLockSwitchOff()) {
       return;
     }
@@ -96,46 +98,56 @@ public class NamespaceAcquireLockAspect {
   }
 
   private void acquireLock(Namespace namespace, String currentUser) {
+    // 当 Namespace 为空时，抛出 BadRequestException 异常
     if (namespace == null) {
       throw new BadRequestException("namespace not exist.");
     }
 
     long namespaceId = namespace.getId();
 
+    // 获得 NamespaceLock 对象
     NamespaceLock namespaceLock = namespaceLockService.findLock(namespaceId);
     if (namespaceLock == null) {
       try {
+        // 锁定
         tryLock(namespaceId, currentUser);
         //lock success
       } catch (DataIntegrityViolationException e) {
+        // 锁定失败，获得 NamespaceLock 对象
         //lock fail
         namespaceLock = namespaceLockService.findLock(namespaceId);
+        // 校验锁定人是否是当前管理员
         checkLock(namespace, namespaceLock, currentUser);
       } catch (Exception e) {
         logger.error("try lock error", e);
         throw e;
       }
     } else {
+      // 校验锁定人是否是当前管理员
       //check lock owner is current user
       checkLock(namespace, namespaceLock, currentUser);
     }
   }
 
   private void tryLock(long namespaceId, String user) {
+    // 创建 NamespaceLock 对象
     NamespaceLock lock = new NamespaceLock();
     lock.setNamespaceId(namespaceId);
     lock.setDataChangeCreatedBy(user);
     lock.setDataChangeLastModifiedBy(user);
+    // 保存 NamespaceLock 对象
     namespaceLockService.tryLock(lock);
   }
 
   private void checkLock(Namespace namespace, NamespaceLock namespaceLock,
                          String currentUser) {
+    // 当 NamespaceLock 不存在，抛出 ServiceException 异常
     if (namespaceLock == null) {
       throw new ServiceException(
           String.format("Check lock for %s failed, please retry.", namespace.getNamespaceName()));
     }
 
+    // 校验锁定人是否是当前管理员。若不是，抛出 BadRequestException 异常
     String lockOwner = namespaceLock.getDataChangeCreatedBy();
     if (!lockOwner.equals(currentUser)) {
       throw new BadRequestException(
