@@ -6,13 +6,40 @@ import com.ctrip.framework.apollo.core.utils.StringUtils;
 
 public class NamespaceReleaseModel implements Verifiable {
 
+  /**
+   * App 编号
+   * {@link com.ctrip.framework.apollo.common.entity.App#id}
+   */
   private String appId;
+  /**
+   * Env 名字
+   */
   private String env;
+  /**
+   * Cluster 名字
+   * {@link com.ctrip.framework.apollo.biz.entity.Cluster#name}
+   */
   private String clusterName;
+  /**
+   * Namespace 名字
+   * {@link com.ctrip.framework.apollo.biz.entity.Namespace#namespaceName}
+   */
   private String namespaceName;
+  /**
+   * 发布标题
+   */
   private String releaseTitle;
+  /**
+   * 发布描述
+   */
   private String releaseComment;
+  /**
+   * 发布人
+   */
   private String releasedBy;
+  /**
+   * 是否紧急发布
+   */
   private boolean isEmergencyPublish;
 
   @Override
