@@ -300,12 +300,16 @@ public class NamespaceService {
 
   @Transactional
   public Namespace save(Namespace entity) {
+    // 判断是否已经存在。若是，抛出 ServiceException 异常。
     if (!isNamespaceUnique(entity.getAppId(), entity.getClusterName(), entity.getNamespaceName())) {
       throw new ServiceException("namespace not unique");
     }
+    // 保护代码，避免 Namespace 对象中，已经有 id 属性。
     entity.setId(0);//protection
+    // 保存 Namespace 到数据库
     Namespace namespace = namespaceRepository.save(entity);
 
+    // 记录 Audit 到数据库中
     auditService.audit(Namespace.class.getSimpleName(), namespace.getId(), Audit.OP.INSERT,
                        namespace.getDataChangeCreatedBy());
 

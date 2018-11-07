@@ -30,22 +30,32 @@ public class AppNamespaceController {
   @Autowired
   private NamespaceService namespaceService;
 
+  /**
+   * 创建 AppNamespace
+   * @param appNamespace AppNamespaceDTO 对象
+   * @return AppNamespaceDTO 对象
+   */
   @RequestMapping(value = "/apps/{appId}/appnamespaces", method = RequestMethod.POST)
   public AppNamespaceDTO create(@RequestBody AppNamespaceDTO appNamespace) {
 
+    // 将 AppNamespaceDTO 转换成 AppNamespace 对象
     AppNamespace entity = BeanUtils.transfrom(AppNamespace.class, appNamespace);
+    // 判断 `name` 在 App 下是否已经存在对应的 AppNamespace 对象。若已经存在，抛出 BadRequestException 异常。
     AppNamespace managedEntity = appNamespaceService.findOne(entity.getAppId(), entity.getName());
 
     if (managedEntity != null) {
       throw new BadRequestException("app namespaces already exist.");
     }
 
+    // 设置 AppNamespace 的 format 属性为 "properties"，若为 null 。
     if (StringUtils.isEmpty(entity.getFormat())){
       entity.setFormat(ConfigFileFormat.Properties.getValue());
     }
 
+    // 保存 AppNamespace 对象到数据库
     entity = appNamespaceService.createAppNamespace(entity);
 
+    // 将保存的 AppNamespace 对象，转换成 AppNamespaceDTO 返回
     return BeanUtils.transfrom(AppNamespaceDTO.class, entity);
   }
 
