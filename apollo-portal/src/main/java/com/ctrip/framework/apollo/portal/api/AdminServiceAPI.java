@@ -32,7 +32,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-
+/**
+ * Admin Service API 集合，包含 Admin Service 所有模块 API 的调用封装。
+ */
 @Service
 public class AdminServiceAPI {
 
