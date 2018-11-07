@@ -61,18 +61,23 @@ public class ItemService {
     long namespaceId = model.getNamespaceId();
     String configText = model.getConfigText();
 
+    // 获得对应格式的 ConfigTextResolver 对象
     ConfigTextResolver resolver =
         model.getFormat() == ConfigFileFormat.Properties ? propertyResolver : fileTextResolver;
 
+    // 解析成 ItemChangeSets
     ItemChangeSets changeSets = resolver.resolve(namespaceId, configText,
         itemAPI.findItems(appId, env, clusterName, namespaceName));
     if (changeSets.isEmpty()) {
       return;
     }
 
+    // 设置修改人为当前管理员
     changeSets.setDataChangeLastModifiedBy(userInfoHolder.getUser().getUserId());
+    // 调用 Admin Service API ，批量更新 Item 们。
     updateItems(appId, env, clusterName, namespaceName, changeSets);
 
+    // TODO Tracer 日志
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE_BY_TEXT,
         String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));

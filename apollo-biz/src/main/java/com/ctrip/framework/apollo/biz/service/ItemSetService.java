@@ -39,17 +39,22 @@ public class ItemSetService {
     String operator = changeSet.getDataChangeLastModifiedBy();
     ConfigChangeContentBuilder configChangeContentBuilder = new ConfigChangeContentBuilder();
 
+    // 保存 Item 们
     if (!CollectionUtils.isEmpty(changeSet.getCreateItems())) {
       for (ItemDTO item : changeSet.getCreateItems()) {
         Item entity = BeanUtils.transfrom(Item.class, item);
         entity.setDataChangeCreatedBy(operator);
         entity.setDataChangeLastModifiedBy(operator);
+        // 保存 Item
         Item createdItem = itemService.save(entity);
+        // 添加到 ConfigChangeContentBuilder 中
         configChangeContentBuilder.createItem(createdItem);
       }
+      // 记录 Audit 到数据库中
       auditService.audit("ItemSet", null, Audit.OP.INSERT, operator);
     }
 
+    // 更新 Item 们
     if (!CollectionUtils.isEmpty(changeSet.getUpdateItems())) {
       for (ItemDTO item : changeSet.getUpdateItems()) {
         Item entity = BeanUtils.transfrom(Item.class, item);
@@ -66,21 +71,29 @@ public class ItemSetService {
         managedItem.setLineNum(entity.getLineNum());
         managedItem.setDataChangeLastModifiedBy(operator);
 
+        // 更新 Item
         Item updatedItem = itemService.update(managedItem);
+        // 添加到 ConfigChangeContentBuilder 中
         configChangeContentBuilder.updateItem(beforeUpdateItem, updatedItem);
 
       }
+      // 记录 Audit 到数据库中
       auditService.audit("ItemSet", null, Audit.OP.UPDATE, operator);
     }
 
+    // 删除 Item 们
     if (!CollectionUtils.isEmpty(changeSet.getDeleteItems())) {
       for (ItemDTO item : changeSet.getDeleteItems()) {
+        // 删除 Item
         Item deletedItem = itemService.delete(item.getId(), operator);
+        // 添加到 ConfigChangeContentBuilder 中
         configChangeContentBuilder.deleteItem(deletedItem);
       }
+      // 记录 Audit 到数据库中
       auditService.audit("ItemSet", null, Audit.OP.DELETE, operator);
     }
 
+    // 创建 Commit 对象，并保存
     if (configChangeContentBuilder.hasContent()){
       createCommit(appId, clusterName, namespaceName, configChangeContentBuilder.build(),
                    changeSet.getDataChangeLastModifiedBy());
@@ -93,6 +106,7 @@ public class ItemSetService {
   private void createCommit(String appId, String clusterName, String namespaceName, String configChangeContent,
                             String operator) {
 
+    // 创建 Commit 对象
     Commit commit = new Commit();
     commit.setAppId(appId);
     commit.setClusterName(clusterName);
@@ -100,6 +114,7 @@ public class ItemSetService {
     commit.setChangeSets(configChangeContent);
     commit.setDataChangeCreatedBy(operator);
     commit.setDataChangeLastModifiedBy(operator);
+    // 保存 Commit 对象
     commitService.save(commit);
   }
 

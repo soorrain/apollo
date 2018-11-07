@@ -7,12 +7,37 @@ import com.ctrip.framework.apollo.core.utils.StringUtils;
 
 public class NamespaceTextModel implements Verifiable {
 
+  /**
+   * App 编号
+   * {@link com.ctrip.framework.apollo.common.entity.App#appId}
+   */
   private String appId;
+  /**
+   * Env 名
+   */
   private String env;
+  /**
+   * Cluster 名
+   * {@link com.ctrip.framework.apollo.biz.entity.Cluster#name}
+   */
   private String clusterName;
+  /**
+   * Namespace 名
+   * {@link com.ctrip.framework.apollo.biz.entity.Namespace#namespaceName}
+   */
   private String namespaceName;
+  /**
+   * Namespace 编号
+   * {@link com.ctrip.framework.apollo.biz.entity.Namespace#id}
+   */
   private int namespaceId;
+  /**
+   * 格式
+   */
   private String format;
+  /**
+   * 配置文本
+   */
   private String configText;
 
 
