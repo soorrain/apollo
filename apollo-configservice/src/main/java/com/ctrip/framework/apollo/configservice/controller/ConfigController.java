@@ -219,7 +219,9 @@ public class ConfigController {
       //no need to audit instance config when there is no ip
       return;
     }
+    // 循环 Release 数组
     for (Release release : releases) {
+      // 记录 InstanceConfig
       instanceConfigAuditUtil.audit(appId, cluster, dataCenter, clientIp, release.getAppId(),
           release.getClusterName(),
           release.getNamespaceName(), release.getReleaseKey());
