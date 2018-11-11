@@ -94,14 +94,17 @@ public class NamespaceBranchController {
                           @PathVariable String branchName, @RequestParam(value = "deleteBranch", defaultValue = "true") boolean deleteBranch,
                           @RequestBody NamespaceReleaseModel model) {
 
+    // 若是紧急发布，但是当前环境未允许该操作，抛出 BadRequestException 异常
     if (model.isEmergencyPublish() && !portalConfig.isEmergencyPublishAllowed(Env.fromString(env))) {
       throw new BadRequestException(String.format("Env: %s is not supported emergency publish now", env));
     }
 
+    // 合并子 Namespace 变更的配置 Map 到父 Namespace ，并进行一次 Release
     ReleaseDTO createdRelease = namespaceBranchService.merge(appId, Env.valueOf(env), clusterName, namespaceName, branchName,
                                                              model.getReleaseTitle(), model.getReleaseComment(),
                                                              model.isEmergencyPublish(), deleteBranch);
 
+    // 创建 ConfigPublishEvent 对象
     ConfigPublishEvent event = ConfigPublishEvent.instance();
     event.withAppId(appId)
         .withCluster(clusterName)
@@ -110,6 +113,7 @@ public class NamespaceBranchController {
         .setMergeEvent(true)
         .setEnv(Env.valueOf(env));
 
+    // 发布 ConfigPublishEvent 事件
     publisher.publishEvent(event);
 
     return createdRelease;
