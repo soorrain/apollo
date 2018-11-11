@@ -90,22 +90,29 @@ public class NamespaceBranchService {
 
   private void doUpdateBranchGrayRules(String appId, String clusterName, String namespaceName,
                                               String branchName, GrayReleaseRule newRules, boolean recordReleaseHistory, int releaseOperation) {
+    // 获得子 Namespace 的灰度发布规则
     GrayReleaseRule oldRules = grayReleaseRuleRepository
         .findTopByAppIdAndClusterNameAndNamespaceNameAndBranchNameOrderByIdDesc(appId, clusterName, namespaceName, branchName);
 
+    // 获得最新的子 Namespace 的 Release 对象
     Release latestBranchRelease = releaseService.findLatestActiveRelease(appId, branchName, namespaceName);
 
+    // 获得最新的子 Namespace 的 Release 对象的编号
     long latestBranchReleaseId = latestBranchRelease != null ? latestBranchRelease.getId() : 0;
 
+    // 设置 GrayReleaseRule 的 `releaseId`
     newRules.setReleaseId(latestBranchReleaseId);
 
+    // 保存新的 GrayReleaseRule 对象
     grayReleaseRuleRepository.save(newRules);
 
+    // 删除老的 GrayReleaseRule 对象
     //delete old rules
     if (oldRules != null) {
       grayReleaseRuleRepository.delete(oldRules);
     }
 
+    // 若需要，创建 ReleaseHistory 对象，并保存
     if (recordReleaseHistory) {
       Map<String, Object> releaseOperationContext = Maps.newHashMap();
       releaseOperationContext.put(ReleaseOperationContext.RULES, GrayReleaseRuleItemTransformer
