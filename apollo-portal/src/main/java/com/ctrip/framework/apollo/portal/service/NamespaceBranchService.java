@@ -46,9 +46,11 @@ public class NamespaceBranchService {
 
   @Transactional
   public NamespaceDTO createBranch(String appId, Env env, String parentClusterName, String namespaceName, String operator) {
+    // 创建 Namespace 分支
     NamespaceDTO createdBranch = namespaceBranchAPI.createBranch(appId, env, parentClusterName, namespaceName,
             operator);
 
+    // TODO Tracer 日志
     Tracer.logEvent(TracerEventType.CREATE_GRAY_RELEASE, String.format("%s+%s+%s+%s", appId, env, parentClusterName,
             namespaceName));
     return createdBranch;

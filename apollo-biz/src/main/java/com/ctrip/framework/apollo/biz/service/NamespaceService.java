@@ -179,17 +179,23 @@ public class NamespaceService {
   }
 
   public Namespace findChildNamespace(String appId, String parentClusterName, String namespaceName) {
+    // 获得 Namespace 数组
     List<Namespace> namespaces = findByAppIdAndNamespaceName(appId, namespaceName);
+    // 若只有一个 Namespace ，说明没有子 Namespace
     if (CollectionUtils.isEmpty(namespaces) || namespaces.size() == 1) {
       return null;
     }
 
+    // 获得 Cluster 数组
     List<Cluster> childClusters = clusterService.findChildClusters(appId, parentClusterName);
+    // 若无子 Cluster ，说明没有子 Namespace
     if (CollectionUtils.isEmpty(childClusters)) {
       return null;
     }
 
+    // 创建子 Cluster 的名字的集合
     Set<String> childClusterNames = childClusters.stream().map(Cluster::getName).collect(Collectors.toSet());
+    // 遍历 Namespace 数组，比较 Cluster 的名字。若符合，则返回该子 Namespace 对象。
     //the child namespace is the intersection of the child clusters and child namespaces
     for (Namespace namespace : namespaces) {
       if (childClusterNames.contains(namespace.getClusterName())) {
@@ -197,6 +203,7 @@ public class NamespaceService {
       }
     }
 
+    // 无子 Namespace ，返回空。
     return null;
   }
 

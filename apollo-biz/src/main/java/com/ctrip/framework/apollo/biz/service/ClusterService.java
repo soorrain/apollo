@@ -134,11 +134,14 @@ public class ClusterService {
   }
 
   public List<Cluster> findChildClusters(String appId, String parentClusterName) {
+    // 获得父 Cluster 对象
     Cluster parentCluster = findOne(appId, parentClusterName);
+    // 若不存在，抛出 BadRequestException 异常
     if (parentCluster == null) {
       throw new BadRequestException("parent cluster not exist");
     }
 
+    // 获得子 Cluster 数组
     return clusterRepository.findByParentClusterId(parentCluster.getId());
   }
 
