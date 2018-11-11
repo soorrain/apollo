@@ -130,6 +130,7 @@ public class NamespaceBranchService {
   public GrayReleaseRule updateRulesReleaseId(String appId, String clusterName,
                                    String namespaceName, String branchName,
                                    long latestReleaseId, String operator) {
+    // 获得老的 GrayReleaseRule 对象
     GrayReleaseRule oldRules = grayReleaseRuleRepository.
         findTopByAppIdAndClusterNameAndNamespaceNameAndBranchNameOrderByIdDesc(appId, clusterName, namespaceName, branchName);
 
@@ -137,6 +138,7 @@ public class NamespaceBranchService {
       return null;
     }
 
+    // 创建新的 GrayReleaseRule 对象
     GrayReleaseRule newRules = new GrayReleaseRule();
     newRules.setBranchStatus(NamespaceBranchStatus.ACTIVE);
     newRules.setReleaseId(latestReleaseId);
