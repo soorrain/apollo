@@ -62,11 +62,13 @@ public class ConsumerService {
   public Consumer createConsumer(Consumer consumer) {
     String appId = consumer.getAppId();
 
+    // 校验 appId 对应的 Consumer 不存在
     Consumer managedConsumer = consumerRepository.findByAppId(appId);
     if (managedConsumer != null) {
       throw new BadRequestException("Consumer already exist");
     }
 
+    // 校验 ownerName 对应的 UserInfo 存在
     String ownerName = consumer.getOwnerName();
     UserInfo owner = userService.findByUserId(ownerName);
     if (owner == null) {
@@ -74,19 +76,23 @@ public class ConsumerService {
     }
     consumer.setOwnerEmail(owner.getEmail());
 
+    // 设置 Consumer 的创建和最后修改人为当前管理员
     String operator = userInfoHolder.getUser().getUserId();
     consumer.setDataChangeCreatedBy(operator);
     consumer.setDataChangeLastModifiedBy(operator);
 
+    // 保存 Consumer 到数据库中
     return consumerRepository.save(consumer);
   }
 
   public ConsumerToken generateAndSaveConsumerToken(Consumer consumer, Date expires) {
     Preconditions.checkArgument(consumer != null, "Consumer can not be null");
 
+    // 生成 ConsumerToken 对象
     ConsumerToken consumerToken = generateConsumerToken(consumer, expires);
     consumerToken.setId(0);
 
+    // 保存 ConsumerToken 到数据库中
     return consumerTokenRepository.save(consumerToken);
   }
 
@@ -192,6 +198,7 @@ public class ConsumerService {
     String createdBy = userInfoHolder.getUser().getUserId();
     Date createdTime = new Date();
 
+    // 创建 ConsumerToken
     ConsumerToken consumerToken = new ConsumerToken();
     consumerToken.setConsumerId(consumerId);
     consumerToken.setExpires(expires);
@@ -200,6 +207,7 @@ public class ConsumerService {
     consumerToken.setDataChangeLastModifiedBy(createdBy);
     consumerToken.setDataChangeLastModifiedTime(createdTime);
 
+    // 生成 ConsumerToken 的 `token`
     generateAndEnrichToken(consumer, consumerToken);
 
     return consumerToken;
@@ -209,9 +217,11 @@ public class ConsumerService {
 
     Preconditions.checkArgument(consumer != null);
 
+    // 设置创建时间
     if (consumerToken.getDataChangeCreatedTime() == null) {
       consumerToken.setDataChangeCreatedTime(new Date());
     }
+    // 生成 ConsumerToken 的 `token`
     consumerToken.setToken(generateToken(consumer.getAppId(), consumerToken
         .getDataChangeCreatedTime(), portalConfig.consumerTokenSalt()));
   }

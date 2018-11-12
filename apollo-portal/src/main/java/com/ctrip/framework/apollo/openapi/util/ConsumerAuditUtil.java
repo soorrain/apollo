@@ -29,11 +29,29 @@ import javax.servlet.http.HttpServletRequest;
 @Service
 public class ConsumerAuditUtil implements InitializingBean {
   private static final int CONSUMER_AUDIT_MAX_SIZE = 10000;
+  /**
+   * 队列
+   */
   private BlockingQueue<ConsumerAudit> audits = Queues.newLinkedBlockingQueue(CONSUMER_AUDIT_MAX_SIZE);
+  /**
+   * ExecutorService 对象
+   */
   private final ExecutorService auditExecutorService;
+  /**
+   * 是否停止
+   */
   private final AtomicBoolean auditStopped;
+  /**
+   * 批任务 ConsumerAudit 数量
+   */
   private int BATCH_SIZE = 100;
+  /**
+   * 批任务 ConsumerAudit 等待超时时间
+   */
   private long BATCH_TIMEOUT = 5;
+  /**
+   * {@link #BATCH_TIMEOUT} 单位
+   */
   private TimeUnit BATCH_TIMEUNIT = TimeUnit.SECONDS;
 
   @Autowired
@@ -50,11 +68,13 @@ public class ConsumerAuditUtil implements InitializingBean {
     if ("GET".equalsIgnoreCase(request.getMethod())) {
       return true;
     }
+    // 组装 URI
     String uri = request.getRequestURI();
     if (!Strings.isNullOrEmpty(request.getQueryString())) {
       uri += "?" + request.getQueryString();
     }
 
+    // 创建 ConsumerAudit 对象
     ConsumerAudit consumerAudit = new ConsumerAudit();
     Date now = new Date();
     consumerAudit.setConsumerId(consumerId);
@@ -64,16 +84,20 @@ public class ConsumerAuditUtil implements InitializingBean {
     consumerAudit.setDataChangeLastModifiedTime(now);
 
     //throw away audits if exceeds the max size
+    // 添加到队列
     return this.audits.offer(consumerAudit);
   }
 
   @Override
   public void afterPropertiesSet() throws Exception {
     auditExecutorService.submit(() -> {
+      // 循环【批任务】，直到停止
       while (!auditStopped.get() && !Thread.currentThread().isInterrupted()) {
         List<ConsumerAudit> toAudit = Lists.newArrayList();
         try {
+          // 获得 ConsumerAudit 批任务，直到到达上限，或者超时
           Queues.drain(audits, toAudit, BATCH_SIZE, BATCH_TIMEOUT, BATCH_TIMEUNIT);
+          // 批量保存到数据库
           if (!toAudit.isEmpty()) {
             consumerService.createConsumerAudits(toAudit);
           }

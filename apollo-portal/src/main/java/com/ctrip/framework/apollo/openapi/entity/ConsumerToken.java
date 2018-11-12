@@ -19,12 +19,21 @@ import javax.persistence.Table;
 @SQLDelete(sql = "Update ConsumerToken set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class ConsumerToken extends BaseEntity {
+  /**
+   * 第三方应用编号，使用 {@link Consumer#id}
+   */
   @Column(name = "ConsumerId", nullable = false)
   private long consumerId;
 
+  /**
+   * Token
+   */
   @Column(name = "token", nullable = false)
   private String token;
 
+  /**
+   * 过期时间
+   */
   @Column(name = "Expires", nullable = false)
   private Date expires;
 

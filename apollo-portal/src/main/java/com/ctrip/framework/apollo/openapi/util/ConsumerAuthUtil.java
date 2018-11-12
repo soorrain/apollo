@@ -12,18 +12,39 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Service
 public class ConsumerAuthUtil {
+  /**
+   * Request Attribute —— Consumer 编号
+   */
   static final String CONSUMER_ID = "ApolloConsumerId";
   @Autowired
   private ConsumerService consumerService;
 
+  /**
+   * 获得 Token 获得对应的 Consumer 编号
+   *
+   * @param token Token
+   * @return Consumer 编号
+   */
   public Long getConsumerId(String token) {
     return consumerService.getConsumerIdByToken(token);
   }
 
+  /**
+   * 设置 Consumer 编号到 Request
+   *
+   * @param request 请求
+   * @param consumerId Consumer 编号
+   */
   public void storeConsumerId(HttpServletRequest request, Long consumerId) {
     request.setAttribute(CONSUMER_ID, consumerId);
   }
 
+  /**
+   * 获得 Consumer 编号从 Request
+   *
+   * @param request 请求
+   * @return Consumer 编号
+   */
   public long retrieveConsumerId(HttpServletRequest request) {
     Object value = request.getAttribute(CONSUMER_ID);
 

@@ -17,7 +17,7 @@ public class AuthFilterConfiguration {
     FilterRegistrationBean openApiFilter = new FilterRegistrationBean();
 
     openApiFilter.setFilter(new ConsumerAuthenticationFilter(consumerAuthUtil, consumerAuditUtil));
-    openApiFilter.addUrlPatterns("/openapi/*");
+    openApiFilter.addUrlPatterns("/openapi/*"); // 匹配 `"/openapi/*"` 路径
 
     return openApiFilter;
   }

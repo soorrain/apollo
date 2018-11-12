@@ -45,13 +45,16 @@ public class ConsumerController {
                                       @DateTimeFormat(pattern = "yyyyMMddHHmmss") Date
                                           expires) {
 
+    // 校验非空
     if (StringUtils.isContainEmpty(consumer.getAppId(), consumer.getName(),
                                    consumer.getOwnerName(), consumer.getOrgId())) {
       throw new BadRequestException("Params(appId、name、ownerName、orgId) can not be empty.");
     }
 
+    // 创建 Consumer 对象，并保存到数据库中
     Consumer createdConsumer = consumerService.createConsumer(consumer);
 
+    // 创建 ConsumerToken 对象，并保存到数据库中
     if (Objects.isNull(expires)) {
       expires = DEFAULT_EXPIRES;
     }

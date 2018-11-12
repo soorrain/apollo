@@ -15,21 +15,41 @@ import javax.persistence.Table;
 @Where(clause = "isDeleted = 0")
 public class Consumer extends BaseEntity {
 
+  /**
+   * 应用名称
+   */
   @Column(name = "Name", nullable = false)
   private String name;
 
+  /**
+   * 应用编号
+   *
+   * 注意，和 {@link com.ctrip.framework.apollo.common.entity.App} 不是一个东西
+   */
   @Column(name = "AppId", nullable = false)
   private String appId;
 
+  /**
+   * 部门编号
+   */
   @Column(name = "OrgId", nullable = false)
   private String orgId;
 
+  /**
+   * 部门编号
+   */
   @Column(name = "OrgName", nullable = false)
   private String orgName;
 
+  /**
+   * 项目负责人名，使用 {@link com.ctrip.framework.apollo.portal.entity.po.UserPO#username}
+   */
   @Column(name = "OwnerName", nullable = false)
   private String ownerName;
 
+  /**
+   * 项目负责人邮箱，使用 {@link com.ctrip.framework.apollo.portal.entity.po.UserPO#email}
+   */
   @Column(name = "OwnerEmail", nullable = false)
   private String ownerEmail;
 

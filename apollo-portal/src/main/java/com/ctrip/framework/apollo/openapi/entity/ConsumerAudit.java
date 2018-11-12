@@ -18,23 +18,41 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "ConsumerAudit")
 public class ConsumerAudit {
+  /**
+   * 日志编号，自增
+   */
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "Id")
   private long id;
 
+  /**
+   * 第三方应用编号，使用 {@link Consumer#id}
+   */
   @Column(name = "ConsumerId", nullable = false)
   private long consumerId;
 
+  /**
+   * 请求 URI
+   */
   @Column(name = "Uri", nullable = false)
   private String uri;
 
+  /**
+   * 请求 Method
+   */
   @Column(name = "Method", nullable = false)
   private String method;
 
+  /**
+   * 数据创建时间
+   */
   @Column(name = "DataChange_CreatedTime")
   private Date dataChangeCreatedTime;
 
+  /**
+   * 数据最后更新时间
+   */
   @Column(name = "DataChange_LastTime")
   private Date dataChangeLastModifiedTime;
 

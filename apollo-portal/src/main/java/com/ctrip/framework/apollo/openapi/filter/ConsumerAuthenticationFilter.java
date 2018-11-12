@@ -37,16 +37,21 @@ public class ConsumerAuthenticationFilter implements Filter {
     HttpServletRequest request = (HttpServletRequest) req;
     HttpServletResponse response = (HttpServletResponse) resp;
 
+    // 从请求 Header 中，获得 token
     String token = request.getHeader("Authorization");
 
+    // 获得 Consumer 编号
     Long consumerId = consumerAuthUtil.getConsumerId(token);
 
+    // 若不存在，返回错误状态码 401
     if (consumerId == null) {
       response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
       return;
     }
 
+    // 存储 Consumer 编号到请求中
     consumerAuthUtil.storeConsumerId(request, consumerId);
+    // 记录 ConsumerAudit 记录
     consumerAuditUtil.audit(request, consumerId);
 
     chain.doFilter(req, resp);
