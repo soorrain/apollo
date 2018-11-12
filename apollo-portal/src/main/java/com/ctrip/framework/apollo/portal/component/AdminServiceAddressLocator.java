@@ -36,9 +36,20 @@ public class AdminServiceAddressLocator {
   private static final String ADMIN_SERVICE_URL_PATH = "/services/admin";
   private static final Logger logger = LoggerFactory.getLogger(AdminServiceAddressLocator.class);
 
+  /**
+   * 定时任务 ExecutorService
+   */
   private ScheduledExecutorService refreshServiceAddressService;
   private RestTemplate restTemplate;
+  /**
+   * Env 数组
+   */
   private List<Env> allEnvs;
+  /**
+   * List<ServiceDTO> 缓存 Map
+   *
+   * KEY：ENV
+   */
   private Map<Env, List<ServiceDTO>> cache = new ConcurrentHashMap<>();
 
   @Autowired
@@ -50,22 +61,28 @@ public class AdminServiceAddressLocator {
 
   @PostConstruct
   public void init() {
+    // 获得 Env 数组
     allEnvs = portalSettings.getAllEnvs();
 
     //init restTemplate
     restTemplate = restTemplateFactory.getObject();
 
+    // 创建 ScheduledExecutorService
     refreshServiceAddressService =
         Executors.newScheduledThreadPool(1, ApolloThreadFactory.create("ServiceLocator", true));
 
+    // 创建延迟任务，1 秒后拉取 Admin Service 地址
     refreshServiceAddressService.schedule(new RefreshAdminServerAddressTask(), 1, TimeUnit.MILLISECONDS);
   }
 
   public List<ServiceDTO> getServiceList(Env env) {
+    // 从缓存中获得 ServiceDTO 数组
     List<ServiceDTO> services = cache.get(env);
+    // 若不存在，直接返回空数组。这点和 ConfigServiceLocator 不同。
     if (CollectionUtils.isEmpty(services)) {
       return Collections.emptyList();
     }
+    // 打乱 ServiceDTO 数组，返回。实现 Client 级的负载均衡
     List<ServiceDTO> randomConfigServices = Lists.newArrayList(services);
     Collections.shuffle(randomConfigServices);
     return randomConfigServices;
@@ -77,15 +94,18 @@ public class AdminServiceAddressLocator {
     @Override
     public void run() {
       boolean refreshSuccess = true;
+      // 循环多个 Env ，请求对应的 Meta Service ，获得 Admin Service 集群地址
       //refresh fail if get any env address fail
       for (Env env : allEnvs) {
         boolean currentEnvRefreshResult = refreshServerAddressCache(env);
         refreshSuccess = refreshSuccess && currentEnvRefreshResult;
       }
 
+      // 若刷新成功，则创建定时任务，5 分钟后执行
       if (refreshSuccess) {
         refreshServiceAddressService
             .schedule(new RefreshAdminServerAddressTask(), NORMAL_REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
+      // 若刷新失败，则创建定时任务，10 秒后执行
       } else {
         refreshServiceAddressService
             .schedule(new RefreshAdminServerAddressTask(), OFFLINE_REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
@@ -98,11 +118,15 @@ public class AdminServiceAddressLocator {
     for (int i = 0; i < RETRY_TIMES; i++) {
 
       try {
+        // 请求 Meta Service ，获得 Admin Service 集群地址
         ServiceDTO[] services = getAdminServerAddress(env);
+        // 获得结果为空，continue ，继续执行下一次请求
         if (services == null || services.length == 0) {
           continue;
         }
+        // 更新缓存
         cache.put(env, Arrays.asList(services));
+        // 返回获取成功
         return true;
       } catch (Throwable e) {
         logger.error(String.format("Get admin server address from meta server failed. env: %s, meta server address:%s",
@@ -112,6 +136,7 @@ public class AdminServiceAddressLocator {
                                     env, MetaDomainConsts.getDomain(env)), e);
       }
     }
+    // 返回获取失败
     return false;
   }
 
