@@ -12,6 +12,7 @@ public class SpringSecurityUserInfoHolder implements UserInfoHolder {
 
   @Override
   public UserInfo getUser() {
+    // 创建 UserInfo 对象，设置 `username` 到 `UserInfo.userId` 中。
     UserInfo userInfo = new UserInfo();
     userInfo.setUserId(getCurrentUsername());
     return userInfo;

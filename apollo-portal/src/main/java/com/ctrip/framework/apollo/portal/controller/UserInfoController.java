@@ -39,10 +39,12 @@ public class UserInfoController {
   @PreAuthorize(value = "@permissionValidator.isSuperAdmin()")
   @RequestMapping(value = "/users", method = RequestMethod.POST)
   public void createOrUpdateUser(@RequestBody UserPO user) {
+    // 校验 `username` `password` 非空
     if (StringUtils.isContainEmpty(user.getUsername(), user.getPassword())) {
       throw new BadRequestException("Username and password can not be empty.");
     }
 
+    // 新增或更新 User
     if (userService instanceof SpringSecurityUserService) {
       ((SpringSecurityUserService) userService).createOrUpdate(user);
     } else {

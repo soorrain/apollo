@@ -31,6 +31,9 @@ import javax.annotation.PostConstruct;
 public class SpringSecurityUserService implements UserService {
 
   private PasswordEncoder encoder = new BCryptPasswordEncoder();
+  /**
+   * 默认角色数组，详细见 {@link #init()}
+   */
   private List<GrantedAuthority> authorities;
 
   @Autowired
@@ -48,14 +51,18 @@ public class SpringSecurityUserService implements UserService {
   public void createOrUpdate(UserPO user) {
     String username = user.getUsername();
 
+    // 创建 Spring Security User
     User userDetails = new User(username, encoder.encode(user.getPassword()), authorities);
 
+    // 若存在，则进行更新
     if (userDetailsManager.userExists(username)) {
       userDetailsManager.updateUser(userDetails);
+    // 若不存在，则进行新增
     } else {
       userDetailsManager.createUser(userDetails);
     }
 
+    // 更新邮箱
     UserPO managedUser = userRepository.findByUsername(username);
     managedUser.setEmail(user.getEmail());
 

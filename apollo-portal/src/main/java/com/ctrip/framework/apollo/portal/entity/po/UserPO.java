@@ -16,16 +16,31 @@ import javax.persistence.Table;
 @Table(name = "Users")
 public class UserPO {
 
+  /**
+   * 编号
+   */
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "Id")
   private long id;
+  /**
+   * 账号
+   */
   @Column(name = "Username", nullable = false)
   private String username;
+  /**
+   * 密码
+   */
   @Column(name = "Password", nullable = false)
   private String password;
+  /**
+   * 邮箱
+   */
   @Column(name = "Email", nullable = false)
   private String email;
+  /**
+   * 是否开启
+   */
   @Column(name = "Enabled", nullable = false)
   private int enabled;
 
