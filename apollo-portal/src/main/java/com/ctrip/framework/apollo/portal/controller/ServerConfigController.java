@@ -34,18 +34,24 @@ public class ServerConfigController {
   @RequestMapping(value = "/server/config", method = RequestMethod.POST)
   public ServerConfig createOrUpdate(@RequestBody ServerConfig serverConfig) {
 
+    // 校验 ServerConfig 非空
     checkModel(Objects.nonNull(serverConfig));
+    // 校验 ServerConfig 的 `key` `value` 属性非空
     RequestPrecondition.checkArgumentsNotEmpty(serverConfig.getKey(), serverConfig.getValue());
 
+    // 获得操作人为当前管理员
     String modifiedBy = userInfoHolder.getUser().getUserId();
 
+    // 查询当前 DB 里的对应的 ServerConfig 对象
     ServerConfig storedConfig = serverConfigRepository.findByKey(serverConfig.getKey());
 
+    // 若不存在，则进行新增
     if (Objects.isNull(storedConfig)) {//create
       serverConfig.setDataChangeCreatedBy(modifiedBy);
       serverConfig.setDataChangeLastModifiedBy(modifiedBy);
       serverConfig.setId(0L);//为空，设置ID 为0，jpa执行新增操作
       return serverConfigRepository.save(serverConfig);
+    // 若存在，则进行更新
     } else {//update
       BeanUtils.copyEntityProperties(serverConfig, storedConfig);
       storedConfig.setDataChangeLastModifiedBy(modifiedBy);

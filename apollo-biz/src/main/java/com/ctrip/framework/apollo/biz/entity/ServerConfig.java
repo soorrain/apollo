@@ -17,15 +17,27 @@ import javax.persistence.Table;
 @SQLDelete(sql = "Update ServerConfig set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class ServerConfig extends BaseEntity {
+  /**
+   * KEY
+   */
   @Column(name = "Key", nullable = false)
   private String key;
 
+  /**
+   * Cluster 名
+   */
   @Column(name = "Cluster", nullable = false)
   private String cluster;
 
+  /**
+   * VALUE
+   */
   @Column(name = "Value", nullable = false)
   private String value;
 
+  /**
+   * 备注
+   */
   @Column(name = "Comment", nullable = false)
   private String comment;
 
