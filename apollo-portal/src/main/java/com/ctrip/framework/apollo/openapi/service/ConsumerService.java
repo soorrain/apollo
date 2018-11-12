@@ -124,11 +124,13 @@ public class ConsumerService {
 
   @Transactional
   public List<ConsumerRole> assignNamespaceRoleToConsumer(String token, String appId, String namespaceName, String env) {
+    // 校验 Token 是否有对应的 Consumer 。若不存在，抛出 BadRequestException 异常
     Long consumerId = getConsumerIdByToken(token);
     if (consumerId == null) {
       throw new BadRequestException("Token is Illegal");
     }
 
+    // 获得 Namespace 对应的 Role 们。若有任一不存在，抛出 BadRequestException 异常
     Role namespaceModifyRole =
         rolePermissionService.findRoleByRoleName(RoleUtils.buildModifyNamespaceRoleName(appId, namespaceName, env));
     Role namespaceReleaseRole =
@@ -141,43 +143,52 @@ public class ConsumerService {
     long namespaceModifyRoleId = namespaceModifyRole.getId();
     long namespaceReleaseRoleId = namespaceReleaseRole.getId();
 
+    // 获得 Consumer 对应的 ConsumerRole 们。若都存在，返回 ConsumerRole 数组
     ConsumerRole managedModifyRole = consumerRoleRepository.findByConsumerIdAndRoleId(consumerId, namespaceModifyRoleId);
     ConsumerRole managedReleaseRole = consumerRoleRepository.findByConsumerIdAndRoleId(consumerId, namespaceReleaseRoleId);
     if (managedModifyRole != null && managedReleaseRole != null) {
       return Arrays.asList(managedModifyRole, managedReleaseRole);
     }
 
+    // 创建 Consumer 对应的 ConsumerRole 们
     String operator = userInfoHolder.getUser().getUserId();
 
     ConsumerRole namespaceModifyConsumerRole = createConsumerRole(consumerId, namespaceModifyRoleId, operator);
     ConsumerRole namespaceReleaseConsumerRole = createConsumerRole(consumerId, namespaceReleaseRoleId, operator);
 
+    // 保存 Consumer 对应的 ConsumerRole 们到数据库中
     ConsumerRole createdModifyConsumerRole = consumerRoleRepository.save(namespaceModifyConsumerRole);
     ConsumerRole createdReleaseConsumerRole = consumerRoleRepository.save(namespaceReleaseConsumerRole);
 
+    // 返回 ConsumerRole 数组
     return Arrays.asList(createdModifyConsumerRole, createdReleaseConsumerRole);
   }
 
   @Transactional
   public ConsumerRole assignAppRoleToConsumer(String token, String appId) {
+    // 校验 Token 是否有对应的 Consumer 。若不存在，抛出 BadRequestException 异常
     Long consumerId = getConsumerIdByToken(token);
     if (consumerId == null) {
       throw new BadRequestException("Token is Illegal");
     }
 
+    // 获得 App 对应的 Role 对象
     Role masterRole = rolePermissionService.findRoleByRoleName(RoleUtils.buildAppMasterRoleName(appId));
     if (masterRole == null) {
       throw new BadRequestException("App's role does not exist. Please check whether app has created.");
     }
 
+    // 获得 Consumer 对应的 ConsumerRole 对象。若已存在，返回 ConsumerRole 对象
     long roleId = masterRole.getId();
     ConsumerRole managedModifyRole = consumerRoleRepository.findByConsumerIdAndRoleId(consumerId, roleId);
     if (managedModifyRole != null) {
       return managedModifyRole;
     }
 
+    // 创建 Consumer 对应的 ConsumerRole 对象
     String operator = userInfoHolder.getUser().getUserId();
     ConsumerRole consumerRole = createConsumerRole(consumerId, roleId, operator);
+    // 保存 Consumer 对应的 ConsumerRole 对象
     return consumerRoleRepository.save(consumerRole);
   }
 

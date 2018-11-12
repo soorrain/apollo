@@ -17,9 +17,15 @@ import javax.persistence.Table;
 @SQLDelete(sql = "Update ConsumerRole set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class ConsumerRole extends BaseEntity {
+  /**
+   * Consumer 编号 {@link Consumer#id}
+   */
   @Column(name = "ConsumerId", nullable = false)
   private long consumerId;
 
+  /**
+   * Role 编号 {@link com.ctrip.framework.apollo.portal.entity.po.Role#id}
+   */
   @Column(name = "RoleId", nullable = false)
   private long roleId;
 

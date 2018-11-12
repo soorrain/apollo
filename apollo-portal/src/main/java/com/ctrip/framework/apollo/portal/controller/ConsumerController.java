@@ -77,11 +77,14 @@ public class ConsumerController {
     String appId = namespace.getAppId();
     String namespaceName = namespace.getNamespaceName();
 
+    // 校验 appId 非空。若为空，抛出 BadRequestException 异常
     if (StringUtils.isEmpty(appId)) {
       throw new BadRequestException("Params(AppId) can not be empty.");
     }
+    // 授权 App 的 Role 给 Consumer
     if (Objects.equals("AppRole", type)) {
       return Collections.singletonList(consumerService.assignAppRoleToConsumer(token, appId));
+    // 授权 Namespace 的 Role 给 Consumer
     } else {
       if (StringUtils.isEmpty(namespaceName)) {
         throw new BadRequestException("Params(NamespaceName) can not be empty.");
