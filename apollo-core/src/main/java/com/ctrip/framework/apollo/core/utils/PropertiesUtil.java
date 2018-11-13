@@ -18,6 +18,7 @@ public class PropertiesUtil {
     StringWriter writer = new StringWriter();
     properties.store(writer, null);
     StringBuffer stringBuffer = writer.getBuffer();
+    // 去除头部自动添加的注释
     filterPropertiesComment(stringBuffer);
     return stringBuffer.toString();
   }
