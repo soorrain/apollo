@@ -11,6 +11,9 @@ import com.google.common.collect.Maps;
 public class DefaultConfigFactoryManager implements ConfigFactoryManager {
   private ConfigRegistry m_registry;
 
+  /**
+   * ConfigFactory 对象的缓存
+   */
   private Map<String, ConfigFactory> m_factories = Maps.newConcurrentMap();
 
   public DefaultConfigFactoryManager() {
